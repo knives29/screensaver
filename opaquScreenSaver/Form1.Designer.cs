@@ -51,7 +51,7 @@
             // timercheck
             // 
             this.timercheck.Interval = 1000;
-            this.timercheck.Tick += new System.EventHandler(this.ScreenSaver_Shown);
+            this.timercheck.Tick += new System.EventHandler(this.timercheck_tick);
             // 
             // timercheckSub
             // 
@@ -62,11 +62,12 @@
             // ScreenSaver
             // 
             this.BackColor = System.Drawing.SystemColors.ActiveBorder;
+            this.BackgroundImage = global::opaquScreenSaver.Properties.Resources.splash;
             this.ClientSize = new System.Drawing.Size(284, 261);
             this.ControlBox = false;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "ScreenSaver";
-            this.Opacity = 0.5D;
+            this.Opacity = 0.25D;
             this.TopMost = true;
             this.TransparencyKey = System.Drawing.SystemColors.ActiveBorder;
             this.UseWaitCursor = true;

@@ -268,15 +268,16 @@ namespace opaquScreenSaver
 
             InitializeComponent();
             //////////////////////
-            WindowState = FormWindowState.Minimized;
-            Visible = false;
-            TopMost = true;
+            //WindowState = FormWindowState.Minimized;
+            //Visible = false;
+            //TopMost = true;
             timercheck.Interval = checkinterval;
             timercheck.Enabled = true;
             /////////////////
             cercles = new List<myObj>();
             random = new Random();
-            this.Bounds = getFullScreen();
+            //this.Bounds = getFullScreen();
+
             //randamposition(0);
             //for (int i = 0; i < 100; i++)
             //{
@@ -401,7 +402,8 @@ namespace opaquScreenSaver
             else cerclemax++;
             if (dmsec > 2000) dmsec = 2000;
             msec = msec2;
-            System.Console.WriteLine(dmsec);
+           System.Console.WriteLine(
+               "draw"+dmsec);
             //System.Console.WriteLine("%d %d",initialcount,cercles.Count);
             for (int i=0;i<(dmsec/(16)*1+1);i++)
                 updateCercles();
@@ -434,13 +436,16 @@ namespace opaquScreenSaver
 
             //canvas.Dispose();
         }
-        private void ScreenSaver_Shown(object sender, EventArgs e)
+        private void timercheck_tick(object sender, EventArgs e)
         {
             TimeSpan span = DateTime.Now - lastUserInputDateTime;
+            System.Console.WriteLine("span"+span);
             if (span >= TimeSpan.FromMilliseconds(checkinterval))
             {
-                WindowState = FormWindowState.Maximized;
+                Console.WriteLine("timecheck"+ TimeSpan.FromMilliseconds(checkinterval));
+                WindowState = FormWindowState.Normal;
                 Visible = true;
+                TopMost = true;
                 timercheck.Enabled = false;
             }
             else
@@ -480,34 +485,48 @@ namespace opaquScreenSaver
                     Math.Min(r.Location.X, s.Bounds.Location.X),
                     Math.Min(r.Location.Y, s.Bounds.Location.Y)
                     );
-                r.Size = new Size(
-                    Math.Max(r.Location.X + r.Width, s.Bounds.Location.X + s.Bounds.Width),
-                    Math.Max(r.Location.Y + r.Height, s.Bounds.Location.Y + s.Bounds.Height)
+            }
+            foreach (Screen s in System.Windows.Forms.Screen.AllScreens)
+            {
+                    r.Size = new Size(
+                    Math.Max(r.Location.X + r.Width, r.Location.X + s.Bounds.Size.Width),
+                    Math.Max(r.Location.Y + r.Height, r.Location.X + s.Bounds.Size.Height)
                     );
             }
             r.Size = new Size(r.Size.Width - r.Location.X, r.Size.Height - r.Location.Y);
+            r.Size = new Size(r.Size.Width - r.Location.X, r.Size.Height - r.Location.Y);
             return r;
         }
+        FormWindowState laststate = FormWindowState.Normal;
         private void ScreenSaver_VisibleChanged(object sender, EventArgs e)
         {
+            //if (laststate == WindowState) return;
+            //else laststate = WindowState;
             if (WindowState == FormWindowState.Minimized)
             {
+                Console.WriteLine("min");
+                timercheck.Interval = checkinterval;
+                timercheck.Enabled = true;
                 timerdraw.Stop();
                 this.DoubleBuffered = false;
             }
-            else if(WindowState == FormWindowState.Maximized)
+            //else if(WindowState == FormWindowState.Maximized)
+            //{
+            //    Console.WriteLine("max");
+            //    WindowState = FormWindowState.Normal;
+            //}
+            else if (WindowState == FormWindowState.Normal)
             {
-                WindowState = FormWindowState.Normal;
-            }
-            else if (WindowState==FormWindowState.Normal)
-            {
+                Console.WriteLine("normal");
+                Rectangle fulls= getFullScreen();
+                if (this.Bounds != fulls) this.Bounds = fulls;
                 mouseMoveEventCounter = 0;
                 timerdraw.Start();
                 this.DoubleBuffered = true;
                 //
-                this.Bounds = getFullScreen();
-                TopLevel = true;
-                TopMost = true;
+                //Visible = true;
+                //TopLevel = true;
+                //TopMost = true;
             }
             //else if(WindowState == FormWindowState.Normal)
             //{
@@ -543,16 +562,25 @@ namespace opaquScreenSaver
         POINT lastmpos;
         private void timercheckSub_Tick(object sender, EventArgs e)
         {
-            timercheckSub.Enabled = false;
+            //timercheckSub.Enabled = false;
             for (int v = 0; v < 256; v++)
             {
                 if (v < 255)
                 {
-                    if (GetAsyncKeyState(v) != 0 && activeVkey[v])
+                    
+                    int keyState = GetAsyncKeyState(v);
+                    //System.Console.WriteLine(v.ToString() + " " + activeVkey[v]+" "+keyState);
+                    if (keyState != 0 && activeVkey[v])
                     {
                         lastUserInputDateTime = DateTime.Now;
+                        System.Console.WriteLine(v);
+
+                        System.Console.WriteLine(lastUserInputDateTime);
+
                         break;
                     }
+                    else if (v==29) ;//OEM specific
+                    else if (v == 246) ;//OEM specific
                     else if (0xe9 <= v && v <= 0xf5) ;//OEM specific
                     else activeVkey[v] = true;
                 }
@@ -578,15 +606,12 @@ namespace opaquScreenSaver
                     }
                 }
             }
-
-            timercheckSub.Enabled = true;
+            //timercheckSub.Enabled = true;
         }
         public void invisibleEnable()
         {
             Visible = false;
             WindowState = FormWindowState.Minimized;
-            timercheck.Interval = checkinterval;
-            timercheck.Enabled = true;
         }
         private void ScreenSaver_KeyDown(object sender, KeyEventArgs e)
         {
