@@ -65,7 +65,7 @@
             this.BackgroundImage = global::opaquScreenSaver.Properties.Resources.splash;
             this.ClientSize = new System.Drawing.Size(284, 261);
             this.ControlBox = false;
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Name = "ScreenSaver";
             this.Opacity = 0.25D;
             this.TopMost = true;

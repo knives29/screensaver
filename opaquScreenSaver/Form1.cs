@@ -72,11 +72,11 @@ namespace opaquScreenSaver
         {
           public  int a, b;
         };
-        public int cerclemax = 0;
+        public int cerclemax = 1;
         void updateCercles()
         {
-            if (cerclemax == 0) cerclemax = cercles.Count;
-            //System.Console.WriteLine("max " + cerclemax.ToString() + " now " + cercles.Count.ToString());
+            //if (cerclemax == 0) cerclemax = cercles.Count;
+            System.Console.WriteLine("max " + cerclemax.ToString() + " now " + cercles.Count.ToString());
 
             float step = 1;
             for (int a = 0; a < cercles.Count; a++)
@@ -104,10 +104,20 @@ namespace opaquScreenSaver
                         idp.a = a;
                         idp.b = b;
                         crossPair.Add(idp);
-                        SizeF tmpvec = cercles[a].mLvec;
-                       
-                        cercles[a].mLvec = cercles[b].mLvec;
-                        cercles[b].mLvec = new SizeF(tmpvec.Width+(float)(random.NextDouble()-0.5), tmpvec.Height+ (float)(random.NextDouble()-0.5));
+                        SizeF tmpveca = cercles[a].mLvec;
+                        SizeF tmpvecb = cercles[b].mLvec;
+                        //tmpvecb = new SizeF(tmpvecb.Width + (float)(random.NextDouble() - 0.5), tmpvecb.Height + (float)(random.NextDouble() - 0.5));
+
+                        double arx = cercles[a].mr;
+                        arx *= arx;
+                        double brx = cercles[b].mr;
+                        brx *= brx;
+                        double allx = arx + brx;
+                        double ax = brx / arx*1.001;
+                        double bx = arx / brx*1.001;
+
+                        cercles[a].mLvec = new SizeF((float)(tmpvecb.Width * ax), (float)(tmpvecb.Height * ax));
+                        cercles[b].mLvec = new SizeF((float)(tmpveca.Width * bx), (float)(tmpveca.Height * bx));
                         //cercles[a].mPen.Color = cercles[b].mPen.Color = Color.Green;
                     }
                 }
@@ -226,14 +236,15 @@ namespace opaquScreenSaver
         {
             //if (Math.Min(a.mr, b.mr) > Math.Abs(a.mr - b.mr)) return -1;
             //if(Math.Abs(a.mr - b.mr)>50)return 1;
-            float dx = 50.0f / Math.Min(a.mr , b.mr) ;
+            double dx = //50.0f / Math.Min(a.mr , b.mr) ;
+                Math.Sqrt(1-(Math.Max(a.mr, b.mr) - Math.Min(a.mr, b.mr) )/ Math.Max(a.mr, b.mr));
 
             //Math.Min(a.mr, b.mr);
             double d = Math.Sqrt(
             Math.Pow(a.mLPoint.X - b.mLPoint.X, 2) +
             Math.Pow(a.mLPoint.Y - b.mLPoint.Y, 2));
             float maxd = a.mr + b.mr;
-            return maxd*dx - (float)d;
+            return maxd*(float)dx - (float)d;
         }
         //int isCross1(myObj a,List<myObj> lb,int pass=-1,List<int> passlist=null)
         //{
@@ -305,8 +316,8 @@ namespace opaquScreenSaver
 
             int sw = Width;
             int sh = Height;
-            int minr = (int)(Math.Min(sw,sh)/20);
-            int maxr = (int)(Math.Max(sw, sh) / 10);
+            int minr = (int)(Math.Min(sw,sh)/50);
+            int maxr = (int)(Math.Max(sw, sh) / 40);
             int sleshCount = 2000;// (sw*sh)>>(4*101);
             int count = 0;
             while (count < sleshCount)
@@ -400,6 +411,7 @@ namespace opaquScreenSaver
             int dmsec = msec2 - msec;
             if (dmsec > 16*8) cerclemax--;
             else cerclemax++;
+            if (cerclemax < 1) cerclemax = 1;
             if (dmsec > 2000) dmsec = 2000;
             msec = msec2;
            System.Console.WriteLine(
@@ -451,6 +463,7 @@ namespace opaquScreenSaver
             else
             {
                 timercheck.Interval = checkinterval - span.Milliseconds;
+                Console.WriteLine("timecheckElse" + TimeSpan.FromMilliseconds(checkinterval));
                 if (!timercheck.Enabled)
                 {
                     timercheck.Enabled = true;
@@ -497,7 +510,7 @@ namespace opaquScreenSaver
             r.Size = new Size(r.Size.Width - r.Location.X, r.Size.Height - r.Location.Y);
             return r;
         }
-        FormWindowState laststate = FormWindowState.Normal;
+        //FormWindowState laststate = FormWindowState.Normal;
         private void ScreenSaver_VisibleChanged(object sender, EventArgs e)
         {
             //if (laststate == WindowState) return;
@@ -521,7 +534,7 @@ namespace opaquScreenSaver
                 Rectangle fulls= getFullScreen();
                 if (this.Bounds != fulls) this.Bounds = fulls;
                 mouseMoveEventCounter = 0;
-                timerdraw.Start();
+                timerdraw.Enabled=true;
                 this.DoubleBuffered = true;
                 //
                 //Visible = true;
@@ -573,6 +586,7 @@ namespace opaquScreenSaver
                     if (keyState != 0 && activeVkey[v])
                     {
                         lastUserInputDateTime = DateTime.Now;
+                        this.timercheck.Enabled = true;
                         System.Console.WriteLine(v);
 
                         System.Console.WriteLine(lastUserInputDateTime);
@@ -593,6 +607,7 @@ namespace opaquScreenSaver
                         if (lastmpos.x != nowmpos.x || lastmpos.y != nowmpos.y)
                         {
                             lastUserInputDateTime = DateTime.Now;
+                            this.timercheck.Enabled = true;
                             lastmpos = nowmpos;
                             {
                                 invisibleEnable();
@@ -611,7 +626,7 @@ namespace opaquScreenSaver
         public void invisibleEnable()
         {
             Visible = false;
-            WindowState = FormWindowState.Minimized;
+            //WindowState = FormWindowState.Minimized;
         }
         private void ScreenSaver_KeyDown(object sender, KeyEventArgs e)
         {
