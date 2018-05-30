@@ -53,6 +53,13 @@ namespace opaquScreenSaver
                 SizeF tmpSF = new SizeF(tmpr2, tmpr2);
                 return new RectangleF(tmpPF, tmpSF);
             }
+            public static implicit operator System.Windows.Rect(myObj obj)
+            {
+                System.Windows.Point tmpPF = new System.Windows.Point(obj.mLPoint.X - obj.mr, obj.mLPoint.Y - obj.mr);
+                float tmpr2 = obj.mr * 1;
+                System.Windows.Point tmpSF = new System.Windows.Point(tmpr2, tmpr2);
+                return new System.Windows.Rect(tmpPF, tmpSF);
+            }
             public Pen mPen;
             public void initPens()
             {
@@ -60,12 +67,65 @@ namespace opaquScreenSaver
                 int r= ScreenSaver.random.Next()&0xff;
                 int g = ScreenSaver.random.Next() & 0xff;
                 int b = ScreenSaver.random.Next() & 0xff;
-                Color c = System.Drawing.Color.FromArgb((int)(255*0.75),r,g,b);
-                mPen = new Pen(c, mr*1);
+                int a1 = (int)(255 * 0.75);
+                int a2 = (int)(255 * 0.25);
+                Color c1 = System.Drawing.Color.FromArgb(a1,r,g,b);
+                //Color c2 = System.Drawing.Color.FromArgb(a2, r, g, b);
+
+                //Point p1 = new Point((int)mLPoint.X,(int)mLPoint.Y);
+                //Point p2= new Point((int)(mLPoint.X+mr), (int)(mLPoint.Y+mr));
+
+                //System.Drawing.Drawing2D.LinearGradientBrush mBrush = new System.Drawing.Drawing2D.LinearGradientBrush(p1,p2,c1,c2) ;
+
+                mPen = new Pen(c1, mr*1);
             }
-            public void DrawElipse(Graphics g)
+            class mybrush : System.Drawing.Brush
             {
-                g.DrawEllipse(mPen, (RectangleF)this);
+                public override object Clone()
+                {
+                    return this;
+                    throw new NotImplementedException();
+                }
+                public mybrush():base()
+                {
+                    
+                }
+            }
+            public void DrawElipse(Graphics gr)
+            {
+                int r = mPen.Color.R;
+                int g = mPen.Color.G;
+                int b = mPen.Color.B;
+                int a1 = (int)(255 * 0.75);
+                int a2 = (int)(255 * 0.25);
+                Color c1 = System.Drawing.Color.FromArgb(a1, g, b,r);
+                Color c2 = System.Drawing.Color.FromArgb(a2, r, g, b);
+
+                Point p1 = new Point((int)(mLPoint.X - mr * 3.14/2), (int)(mLPoint.Y + mr * 3.14/2));
+                Point p2 = new Point((int)(mLPoint.X + mr * 3.14 / 2), (int)(mLPoint.Y - mr * 3.14 / 2));
+
+                System.Drawing.Drawing2D.LinearGradientBrush mBrush = new System.Drawing.Drawing2D.LinearGradientBrush(p1, p2, c1, c2);
+                mybrush test = new mybrush();
+                //Pen pen = new Pen(test,mr);
+                Pen pen = new Pen(mBrush,mr);
+                gr.DrawEllipse(pen, (RectangleF)this);
+                /////
+                //System.Windows.Media.RadialGradientBrush blush = new System.Windows.Media.RadialGradientBrush();
+                //blush.GradientOrigin = new System.Windows.Point(0.75, 0.25);
+                //blush.GradientStops.Add(new System.Windows.Media.GradientStop(System.Windows.Media.Colors.Yellow, 0));
+                //blush.GradientStops.Add(new System.Windows.Media.GradientStop(System.Windows.Media.Colors.Orange, 0.5));
+                //blush.GradientStops.Add(new System.Windows.Media.GradientStop(System.Windows.Media.Colors.Red, 1));
+
+                //System.Windows.Media.rectangle eg = new System.Windows.Media.EllipseGeometry(this);
+
+                //System.Windows.Media.RectangleGeometry rg = new System.Windows.Media.RectangleGeometry(this);
+
+                //Blush
+                //Blush blush2 = new Blush();
+
+                //Pen rPen = new Pen(blush2);
+
+                //g.DrawEllipse(blush, this);
             }
         };
         struct idpair
@@ -73,6 +133,33 @@ namespace opaquScreenSaver
           public  int a, b;
         };
         public int cerclemax = 1;
+        SizeF sizexdouble(SizeF size,double x)
+        {
+            return new SizeF(size.Width * (float)x, size.Height * (float)x);
+        }
+        SizeF sizexsize(SizeF s0, SizeF s1)
+        {
+            return new SizeF(s0.Width * s1.Width, s0.Height * s1.Height);
+        }
+        double lenSize(SizeF s)
+        {
+            return Math.Sqrt(s.Width * s.Width + s.Height * s.Height);
+        }
+        SizeF normsize(SizeF s)
+        {
+            double l = lenSize(s);
+            return sizexdouble(s, 1 / l);
+        }
+        double dotsize(SizeF a,SizeF b)
+        {
+            return a.Width * b.Width + a.Height * b.Height;
+        }
+        
+        SizeF reflectSize(SizeF s,SizeF n)
+        {
+            s = sizexdouble(s, -1);
+            return sizexdouble( sizexdouble(n,2) , dotsize(s, n) )- s;
+        }
         void updateCercles()
         {
             //if (cerclemax == 0) cerclemax = cercles.Count;
@@ -110,15 +197,44 @@ namespace opaquScreenSaver
 
                         double arx = cercles[a].mr;
                         arx *= arx;
+                        arx += (random.NextDouble() - 0.5)/4;
                         double brx = cercles[b].mr;
                         brx *= brx;
-                        double allx = arx + brx;
-                        double ax = brx / arx*1.001;
-                        double bx = arx / brx*1.001;
+                        brx += (random.NextDouble() - 0.5)/4;
 
-                        cercles[a].mLvec = new SizeF((float)(tmpvecb.Width * ax), (float)(tmpvecb.Height * ax));
-                        cercles[b].mLvec = new SizeF((float)(tmpveca.Width * bx), (float)(tmpveca.Height * bx));
+                        SizeF arvec = new SizeF(tmpveca.Width * (float)arx, tmpveca.Height * (float)arx);
+                        SizeF brvec = new SizeF(tmpvecb.Width * (float)brx, tmpvecb.Height * (float)brx);
+
+                        double allx = 1/crossF;// arx + brx;
+                        double aax = 0*arx / allx;// brx / arx*1.001;
+                        double abx = brx / allx;// arx / brx*1.001;
+                        double bax = 0*brx / allx;
+                        double bbx = arx / allx;
+
+                        //cercles[a].mLvec = new SizeF((float)(brvec.Width / arx), (float)(brvec.Height / arx));
+                        //cercles[b].mLvec = new SizeF((float)(arvec.Width / brx), (float)(arvec.Height / brx));
+                        //cercles[a].mLvec = new SizeF((float)(tmpveca.Width* aax + tmpvecb.Width * abx), (float)(tmpveca.Width * aax + tmpvecb.Width * abx));
+                        //cercles[b].mLvec = new SizeF((float)(tmpveca.Width * bax + tmpvecb.Width * bbx), (float)(tmpveca.Width * bax + tmpvecb.Width * bbx));
                         //cercles[a].mPen.Color = cercles[b].mPen.Color = Color.Green;
+                        ////////////////
+                        SizeF dn = normsize(cercles[a].mLvec - cercles[b].mLvec);
+                        double ar3 = Math.Pow(cercles[a].mr, 3);
+                        double br3 = Math.Pow(cercles[b].mr, 3);
+
+                       
+                        SizeF avec = normsize(cercles[a].mLvec);///ar3);
+                        SizeF bvec = normsize( cercles[b].mLvec);/// br3);
+                        SizeF reflecta = reflectSize(avec, dn);
+                        SizeF reflectb = reflectSize(bvec, dn);
+
+
+                        double per = ar3 + br3;
+                        cercles[a].mLvec = sizexdouble(reflecta, 1);//* ar3);
+                        cercles[b].mLvec = sizexdouble( reflectb, 1);//* br3);
+                        //double per = ar3 + br3;
+                        //double perx = 1;
+                        //cercles[a].mLvec = sizexdouble( cercles[a].mLvec, ar3 / per/ perx) + sizexdouble(reflecta, perx - br3 / per);
+                        //cercles[b].mLvec = sizexdouble(cercles[a].mLvec, br3 / per / perx) + sizexdouble(reflectb, perx - ar3 / per);
                     }
                 }
             }
@@ -142,8 +258,12 @@ namespace opaquScreenSaver
                 if (isDel)
                 {
                     cercles[a].areaOutCount++;
-                    if (cercles[a].areaOutCount > 3)
+                    if (cercles[a].areaOutCount > 10)
                         dellist.Add(a);
+                    else
+                    {
+                        cercles[a].mLPoint += cercles[a].mLvec;
+                    }
                 }
             }
             while (dellist.Count > 0)
@@ -160,58 +280,6 @@ namespace opaquScreenSaver
             if (cercles.Count < cerclemax)
                 randamposition(cerclemax);// dellist.Count + cercles.Count);
             return;
-            return;
-            for (int i = 0; i < cercles.Count; i++)
-            {
-                //myObj updateObj = new myObj(cercles[i].mLPoint[bid][0], cercles[i].mr, cercles[i].mLvec[bid][0]);
-                //updateObj.mLvec[bid][0] = cercles[i].mLvec[bid][0];
-                //updateObj.mLPoint[bid][0] = new PointF(
-                //    updateObj.mLPoint[bid][0].X + updateObj.mLvec[bid][0].Width,
-                //    updateObj.mLPoint[bid][0].Y + updateObj.mLvec[bid][0].Height
-                //);
-                //updateObj.mPen = cercles[i].mPen;
-                //PointF updateObjmPosition = new PointF(0, 0);
-                //int crossCount = 0;
-                //int crossedId;// = isCross1(updateObj, cercles, i);
-                //List<int> crossedIds = new List<int>();
-                //int maxtrycount = 1000;
-                //while ((crossedId= isCross1(updateObj, cercles, i,crossedIds)) >= 0 && crossCount < maxtrycount &&true)
-                //{
-                //    crossedIds.Add(crossedId);
-                //    PointF avgPoint=new PointF();
-                //    SizeF avgSize = new SizeF();
-                //    for(int c = 0; c < crossedIds.Count; c++)
-                //    {
-                //        int cc = crossedIds[c];
-                //        avgPoint.X += cercles[cc].mLPoint[bid][0].X;
-                //        avgPoint.Y += cercles[cc].mLPoint[bid][0].Y;
-                //        avgSize.Width = cercles[cc].mLvec[bid][0].Width;
-                //        avgSize.Height = cercles[cc].mLvec[bid][0].Height;
-                //    }
-                //    avgPoint.X /= crossedIds.Count;
-                //    avgPoint.Y /= crossedIds.Count;
-                //    avgSize.Width /= crossedIds.Count;
-                //    avgSize.Height /= crossedIds.Count;
-                //    float perx = (avgPoint.X - cercles[i].mLPoint[bid][0].X) / avgSize.Width;
-                //    float pery = (avgPoint.Y - cercles[i].mLPoint[bid][0].Y) / avgSize.Height;
-                //    float perMin =  Math.Abs(perx) < Math.Abs(pery) ? perx: pery;
-                //    updateObj.mLPoint[bid][0] = new PointF(
-                //        cercles[i].mLPoint[bid][0].X + updateObj.mLvec[bid][0].Width*perMin,
-                //        cercles[i].mLPoint[bid][0].Y + updateObj.mLvec[bid][0].Height*perMin
-                //    );
-                //    crossCount++;
-                //}
-                //if (crossCount == maxtrycount)
-                //{
-                //    updateObj.mLPoint[bid][0] = ( cercles[i].mLPoint[bid][0]);
-                //}
-
-                //if ((0 - updateObj.mr*2) < updateObj.mLPoint[bid][0].X && updateObj.mLPoint[bid][0].X < (Width + updateObj.mr * 2)) ; else updateObj.mLvec[bid][0].Width *= -1;
-                //if ((0 - updateObj.mr * 2) < updateObj.mLPoint[bid][0].Y && updateObj.mLPoint[bid][0].Y < (Height + updateObj.mr * 2)) ; else updateObj.mLvec[bid][0].Height *= -1;
-                //cercles[i] = updateObj;
-            }
-            cercles.Sort((a,b) => Math.Sign( a.mr - b.mr));
-            //randamposition();
         }
         List<myObj> cercles;
         int mouseMoveEventCounter;
@@ -238,6 +306,7 @@ namespace opaquScreenSaver
             //if(Math.Abs(a.mr - b.mr)>50)return 1;
             double dx = //50.0f / Math.Min(a.mr , b.mr) ;
                 Math.Sqrt(1-(Math.Max(a.mr, b.mr) - Math.Min(a.mr, b.mr) )/ Math.Max(a.mr, b.mr));
+            //dx = 1;
 
             //Math.Min(a.mr, b.mr);
             double d = Math.Sqrt(
@@ -246,31 +315,6 @@ namespace opaquScreenSaver
             float maxd = a.mr + b.mr;
             return maxd*(float)dx - (float)d;
         }
-        //int isCross1(myObj a,List<myObj> lb,int pass=-1,List<int> passlist=null)
-        //{
-        //    for(int b = 0; b < lb.Count; b++)
-        //    {
-        //        if (b == pass) continue;
-        //        if (passlist != null)
-        //        {
-        //            int p = 0;
-        //            for (; p < passlist.Count; p++)
-        //                if (b == passlist[p]) break;
-        //            if (p < passlist.Count) continue;
-        //        }
-        //        if (isCross(a, lb[b],nid))return b;
-        //    }
-        //    return -1;
-        //}
-        //int isCross2(List<myObj> la,List<myObj> lb,int pass=-1)
-        //{
-        //    for(int a = 0; a < la.Count; a++)
-        //    {
-        //        if (a == pass) continue;
-        //        if (isCross1(la[a], lb)>=0) return a;
-        //    }
-        //    return -1;
-        //}
         public ScreenSaver()
         {
 
@@ -279,45 +323,20 @@ namespace opaquScreenSaver
 
             InitializeComponent();
             //////////////////////
-            //WindowState = FormWindowState.Minimized;
-            //Visible = false;
-            //TopMost = true;
             timercheck.Interval = checkinterval;
             timercheck.Enabled = true;
             /////////////////
             cercles = new List<myObj>();
             random = new Random();
-            //this.Bounds = getFullScreen();
-
-            //randamposition(0);
-            //for (int i = 0; i < 100; i++)
-            //{
-            //    //System.Threading.Thread.Sleep(100);
-            //    updateCercles();
-            //}
-
         }
-        //public bool isCrossCercles()
-        //{
-        //    for(int a = 0; a < cercles.Count; a++)
-        //    {
-        //        for(int b = 0; b < cercles.Count; b++)
-        //        {
-        //            if (a == b) continue;
-        //            if (!isCross(cercles[a], cercles[b])) return false;
-        //        }
-        //    }
-        //    return true;
-            
-        //}
         public void randamposition(int cercleLimit)
         {
             //cercles.Clear();
 
             int sw = Width;
             int sh = Height;
-            int minr = (int)(Math.Min(sw,sh)/50);
-            int maxr = (int)(Math.Max(sw, sh) / 40);
+            int minr = (int)(Math.Min(sw,sh)/100);
+            int maxr = (int)(Math.Max(sw, sh) / 20);
             int sleshCount = 2000;// (sw*sh)>>(4*101);
             int count = 0;
             while (count < sleshCount)
@@ -503,7 +522,7 @@ namespace opaquScreenSaver
             {
                     r.Size = new Size(
                     Math.Max(r.Location.X + r.Width, r.Location.X + s.Bounds.Size.Width),
-                    Math.Max(r.Location.Y + r.Height, r.Location.X + s.Bounds.Size.Height)
+                    Math.Max(r.Location.Y + r.Height, r.Location.Y + s.Bounds.Size.Height)
                     );
             }
             r.Size = new Size(r.Size.Width - r.Location.X, r.Size.Height - r.Location.Y);
@@ -531,6 +550,8 @@ namespace opaquScreenSaver
             else if (WindowState == FormWindowState.Normal)
             {
                 Console.WriteLine("normal");
+                this.ScaleControl(new SizeF(1, 1), BoundsSpecified.None);
+
                 Rectangle fulls= getFullScreen();
                 if (this.Bounds != fulls) this.Bounds = fulls;
                 mouseMoveEventCounter = 0;

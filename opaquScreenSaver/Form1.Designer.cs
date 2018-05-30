@@ -67,7 +67,7 @@
             this.ControlBox = false;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Name = "ScreenSaver";
-            this.Opacity = 0.25D;
+            this.Opacity = 0.5D;
             this.TopMost = true;
             this.TransparencyKey = System.Drawing.SystemColors.ActiveBorder;
             this.UseWaitCursor = true;
