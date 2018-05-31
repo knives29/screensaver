@@ -13,7 +13,7 @@ namespace opaquScreenSaver
     public partial class ScreenSaver : Form
     {
         public static Random random;
-        public static int checkinterval = 2000;//5 * 60 * 1000;//5funn
+        //public static int checkinterval = 2000;//5 * 60 * 1000;//5funn
         public DateTime lastUserInputDateTime = DateTime.Now;
         public bool[] activeVkey;
         public int initialcount = 0;
@@ -314,6 +314,19 @@ namespace opaquScreenSaver
             Math.Pow(a.mLPoint.Y - b.mLPoint.Y, 2));
             float maxd = a.mr + b.mr;
             return maxd*(float)dx - (float)d;
+        }
+        int checkinterval
+        {
+            get
+            {
+                const int m = 60 * 1000;
+                if (menu1.Checked) return m * 1;
+                if (menu15.Checked) return m * 15;
+                if (menu30.Checked) return m * 30;
+                if (menu60.Checked) return m * 60;
+                if (menu120.Checked) return m * 120;
+                return 120*m;
+            }
         }
         public ScreenSaver()
         {
@@ -654,16 +667,6 @@ namespace opaquScreenSaver
             invisibleEnable();
         }
 
-        private void ScreenSaver_MouseMove(object sender, EventArgs e)
-        {
-            invisibleEnable();
-        }
-
-        private void ScreenSaver_KeyDown(object sender, MouseEventArgs e)
-        {
-            invisibleEnable();
-        }
-
         private void ScreenSaver_KeyDown(object sender, KeyPressEventArgs e)
         {
             invisibleEnable();
@@ -672,6 +675,37 @@ namespace opaquScreenSaver
         private void ScreenSaver_KeyDown(object sender, PreviewKeyDownEventArgs e)
         {
             invisibleEnable();
+        }
+
+        private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+
+        }
+        
+        private void menuExit_CheckStateChanged(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+
+        private void menu0_CheckedChanged(object sender, EventArgs e)
+        {
+            menu0.Checked = false;
+            lastUserInputDateTime = new DateTime();
+            timercheck.Interval = 1;
+            timercheck.Enabled = true;
+        }
+        private void menuX_CheckedChanged(object sender, EventArgs e)
+        {
+            System.Windows.Forms.ToolStripMenuItem[] items = { menu1, menu15,menu30,menu60,menu120};
+            System.Windows.Forms.ToolStripMenuItem item = (System.Windows.Forms.ToolStripMenuItem)sender;
+            //foreach (System.Windows.Forms.ToolStripMenuItem i in items)
+            for(int i=0;i<5;i++)
+            {
+                //if (i == item) item.Checked = true;
+                //else
+                items[i].Checked = items[i]==item;
+                if (items[i].Checked) timercheck.Interval = checkinterval;
+            }
         }
     }
 }
